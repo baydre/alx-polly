@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -19,12 +22,19 @@ export function LoginForm() {
     setError("");
 
     try {
-      // TODO: Implement authentication logic
-      console.log("Login attempt:", { email, password });
-      // Placeholder for authentication API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid credentials. Please try again.");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
-      setError("Invalid credentials. Please try again.");
+      setError("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }

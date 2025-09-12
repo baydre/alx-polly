@@ -62,18 +62,24 @@ export function CreatePollForm() {
     }
 
     try {
-      // TODO: Implement poll creation API call
-      const pollData = {
-        title: title.trim(),
-        description: description.trim(),
-        options: validOptions.map(option => option.text.trim()),
-      };
+      const response = await fetch("/api/polls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          description: description.trim(),
+          options: validOptions.map(option => option.text.trim()),
+        }),
+      });
 
-      console.log("Creating poll:", pollData);
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const data = await response.json();
 
-      // Redirect to polls page or newly created poll
-      router.push("/polls");
+      if (!response.ok) {
+        setError(data.message || "Failed to create poll");
+      } else {
+        // Success! Redirect to the new poll or polls page
+        router.push(`/polls/${data.poll.id}`);
+      }
     } catch (err) {
       setError("Failed to create poll. Please try again.");
     } finally {

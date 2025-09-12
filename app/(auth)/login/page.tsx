@@ -1,7 +1,23 @@
 import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Suspense } from "react";
 
-export default function LoginPage() {
+function LoginContent() {
+  return (
+    <>
+      <LoginForm />
+    </>
+  );
+}
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ message?: string }>;
+}) {
+  const params = await searchParams;
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -13,7 +29,14 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <LoginForm />
+            {params.message && (
+              <Alert className="mb-4">
+                <AlertDescription>{params.message}</AlertDescription>
+              </Alert>
+            )}
+            <Suspense fallback={<div>Loading...</div>}>
+              <LoginContent />
+            </Suspense>
           </CardContent>
         </Card>
       </div>

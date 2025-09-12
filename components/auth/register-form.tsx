@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function RegisterForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -36,10 +38,24 @@ export function RegisterForm() {
     }
 
     try {
-      // TODO: Implement registration logic
-      console.log("Registration attempt:", formData);
-      // Placeholder for registration API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Registration failed");
+      } else {
+        // Registration successful, redirect to login
+        router.push("/login?message=Registration successful! Please sign in.");
+      }
     } catch (err) {
       setError("Registration failed. Please try again.");
     } finally {

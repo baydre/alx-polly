@@ -1,39 +1,62 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+interface Poll {
+  id: string;
+  title: string;
+  description: string;
+  totalVotes: number;
+  status: "active" | "closed" | "draft";
+  createdAt: string;
+  options: Array<{ id: string; text: string; votes: number }>;
+}
+
 export function RecentPolls() {
-  // TODO: Fetch real polls from API
-  const recentPolls = [
-    {
-      id: "1",
-      title: "What's your favorite programming language?",
-      description: "Help us understand our developer community preferences",
-      totalVotes: 245,
-      status: "active",
-      createdAt: "2025-08-20",
-      options: ["JavaScript", "Python", "TypeScript", "Go"],
-    },
-    {
-      id: "2",
-      title: "Best time for team meetings?",
-      description: "Finding the optimal meeting schedule for our team",
-      totalVotes: 89,
-      status: "active",
-      createdAt: "2025-08-19",
-      options: ["Morning", "Afternoon", "Evening"],
-    },
-    {
-      id: "3",
-      title: "Office lunch preferences",
-      description: "Planning next week's catered lunch options",
-      totalVotes: 156,
-      status: "closed",
-      createdAt: "2025-08-15",
-      options: ["Italian", "Asian", "Mexican", "Mediterranean"],
-    },
-  ];
+  const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchRecentPolls() {
+      try {
+        const response = await fetch("/api/polls");
+        const data = await response.json();
+        
+        if (data.success) {
+          // Get the 3 most recent polls
+          setRecentPolls(data.polls.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error fetching recent polls:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchRecentPolls();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle>Recent Polls</CardTitle>
+            <Button variant="outline" asChild>
+              <Link href="/polls">View All</Link>
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">Loading recent polls...</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -60,7 +83,7 @@ export function RecentPolls() {
                 <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span>{poll.totalVotes} votes</span>
                   <span>{poll.options.length} options</span>
-                  <span>Created {poll.createdAt}</span>
+                  <span>Created {new Date(poll.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
               <Button variant="outline" size="sm" asChild>

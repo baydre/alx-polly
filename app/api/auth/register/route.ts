@@ -1,33 +1,40 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
+import { findUserByEmail, createUser } from '@/lib/data/database-store';
+import { addUser } from "@/lib/auth/config";
 
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password } = await request.json();
 
-    // TODO: Implement registration logic
-    // - Validate input data
-    // - Check if user already exists
-    // - Hash password
-    // - Store user in database
-    // - Generate JWT token or session
+    // Basic validation
+    if (!name || !email || !password) {
+      return NextResponse.json(
+        { success: false, message: "All fields are required" },
+        { status: 400 }
+      );
+    }
 
-    console.log("Registration attempt:", { name, email });
+    if (password.length < 6) {
+      return NextResponse.json(
+        { success: false, message: "Password must be at least 6 characters" },
+        { status: 400 }
+      );
+    }
 
-    // Placeholder response
+    // Create new user
+    const user = await addUser(name, email, password);
+
     return NextResponse.json({
       success: true,
       message: "Registration successful",
-      user: {
-        id: "1",
-        email,
-        name,
-      },
+      user,
     });
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
       { success: false, message: "Registration failed" },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }

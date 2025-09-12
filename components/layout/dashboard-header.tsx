@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,8 +15,21 @@ import {
 
 export function DashboardHeader() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isActive = (path: string) => pathname === path;
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: "/" });
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -67,14 +81,20 @@ export function DashboardHeader() {
                   <NavigationMenuTrigger>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="/placeholder-avatar.jpg" alt="User" />
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarFallback>
+                        {session?.user?.name ? getInitials(session.user.name) : "U"}
+                      </AvatarFallback>
                     </Avatar>
                   </NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <div className="p-4 w-48">
                       <div className="space-y-2">
-                        <p className="text-sm font-medium">John Doe</p>
-                        <p className="text-xs text-gray-500">john@example.com</p>
+                        <p className="text-sm font-medium">
+                          {session?.user?.name || "User"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {session?.user?.email || "user@example.com"}
+                        </p>
                         <hr />
                         <Button variant="ghost" size="sm" className="w-full justify-start">
                           Profile
@@ -82,7 +102,12 @@ export function DashboardHeader() {
                         <Button variant="ghost" size="sm" className="w-full justify-start">
                           Settings
                         </Button>
-                        <Button variant="ghost" size="sm" className="w-full justify-start text-red-600">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start text-red-600"
+                          onClick={handleSignOut}
+                        >
                           Sign out
                         </Button>
                       </div>

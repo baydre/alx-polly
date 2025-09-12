@@ -1,52 +1,61 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Poll } from "@/lib/data/database-store";
 
 export function PollsList() {
-  // TODO: Fetch real polls from API
-  const polls = [
-    {
-      id: "1",
-      title: "What's your favorite programming language?",
-      description: "Help us understand our developer community preferences",
-      totalVotes: 245,
-      status: "active",
-      createdAt: "2025-08-20",
-      endDate: "2025-08-30",
-      options: ["JavaScript", "Python", "TypeScript", "Go"],
-    },
-    {
-      id: "2",
-      title: "Best time for team meetings?",
-      description: "Finding the optimal meeting schedule for our team",
-      totalVotes: 89,
-      status: "active",
-      createdAt: "2025-08-19",
-      endDate: "2025-08-29",
-      options: ["Morning", "Afternoon", "Evening"],
-    },
-    {
-      id: "3",
-      title: "Office lunch preferences",
-      description: "Planning next week's catered lunch options",
-      totalVotes: 156,
-      status: "closed",
-      createdAt: "2025-08-15",
-      endDate: "2025-08-22",
-      options: ["Italian", "Asian", "Mexican", "Mediterranean"],
-    },
-    {
-      id: "4",
-      title: "Remote work policy feedback",
-      description: "Share your thoughts on our new remote work policy",
-      totalVotes: 67,
-      status: "active",
-      createdAt: "2025-08-18",
-      endDate: "2025-09-01",
-      options: ["Fully remote", "Hybrid", "Office only", "Flexible"],
-    },
-  ];
+  const [polls, setPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetchPolls();
+  }, []);
+
+  const fetchPolls = async () => {
+    try {
+      const response = await fetch("/api/polls");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Failed to fetch polls");
+      } else {
+        setPolls(data.polls || []);
+      }
+    } catch (err) {
+      setError("Failed to fetch polls");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-center py-8">Loading polls...</div>;
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (polls.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500 mb-4">No polls found. Create your first poll!</p>
+        <Button asChild>
+          <Link href="/create-poll">Create Poll</Link>
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -74,28 +83,30 @@ export function PollsList() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span className="text-gray-500">Total Votes:</span>
-                <p className="font-medium">{poll.totalVotes}</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <span className="text-gray-500">Total Votes:</span>
+                  <p className="font-medium">{poll.totalVotes}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Options:</span>
+                  <p className="font-medium">{poll.options.length}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Created:</span>
+                  <p className="font-medium">{new Date(poll.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500">Ends:</span>
+                  <p className="font-medium">
+                    {poll.endDate ? new Date(poll.endDate).toLocaleDateString() : "No end date"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="text-gray-500">Options:</span>
-                <p className="font-medium">{poll.options.length}</p>
+              <div className="mt-4">
+                <span className="text-sm text-gray-500">Options: </span>
+                <span className="text-sm">{poll.options.map(o => o.text).join(", ")}</span>
               </div>
-              <div>
-                <span className="text-gray-500">Created:</span>
-                <p className="font-medium">{poll.createdAt}</p>
-              </div>
-              <div>
-                <span className="text-gray-500">Ends:</span>
-                <p className="font-medium">{poll.endDate}</p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <span className="text-sm text-gray-500">Options: </span>
-              <span className="text-sm">{poll.options.join(", ")}</span>
-            </div>
           </CardContent>
         </Card>
       ))}

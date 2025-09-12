@@ -5,22 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
-interface PollOption {
-  id: string;
-  text: string;
-  votes: number;
-}
-
-interface Poll {
-  id: string;
-  title: string;
-  description: string;
-  options: PollOption[];
-  totalVotes: number;
-  createdAt: string;
-  isActive: boolean;
-}
+import { Poll, PollOption } from "@/lib/data/database-store";
 
 interface PollDetailProps {
   poll: Poll;
@@ -36,10 +21,25 @@ export function PollDetail({ poll }: PollDetailProps) {
 
     setIsVoting(true);
     try {
-      // TODO: Implement voting API call
-      console.log("Voting for option:", selectedOption);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setHasVoted(true);
+      const response = await fetch("/api/votes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pollId: poll.id,
+          optionId: selectedOption,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Voting failed:", data.message);
+        // You might want to show an error message to the user
+      } else {
+        setHasVoted(true);
+        // You might want to refresh the poll data to show updated vote counts
+        window.location.reload(); // Simple refresh for now
+      }
     } catch (error) {
       console.error("Voting failed:", error);
     } finally {
@@ -61,8 +61,8 @@ export function PollDetail({ poll }: PollDetailProps) {
               <CardTitle className="text-2xl mb-2">{poll.title}</CardTitle>
               <p className="text-gray-600">{poll.description}</p>
             </div>
-            <Badge variant={poll.isActive ? "default" : "secondary"}>
-              {poll.isActive ? "Active" : "Closed"}
+            <Badge variant={poll.status === "active" ? "default" : "secondary"}>
+              {poll.status === "active" ? "Active" : "Closed"}
             </Badge>
           </div>
         </CardHeader>
@@ -91,10 +91,10 @@ export function PollDetail({ poll }: PollDetailProps) {
                       value={option.id}
                       checked={selectedOption === option.id}
                       onChange={(e) => setSelectedOption(e.target.value)}
-                      disabled={!poll.isActive || hasVoted}
+                      disabled={poll.status !== "active" || hasVoted}
                       className="text-blue-600"
                     />
-                    <span className={hasVoted || !poll.isActive ? "text-gray-600" : ""}>
+                    <span className={hasVoted || poll.status !== "active" ? "text-gray-600" : ""}>
                       {option.text}
                     </span>
                   </label>
@@ -116,7 +116,7 @@ export function PollDetail({ poll }: PollDetailProps) {
             ))}
           </div>
 
-          {poll.isActive && !hasVoted && (
+          {poll.status === "active" && !hasVoted && (
             <div className="mt-6 pt-6 border-t">
               <Button
                 onClick={handleVote}
