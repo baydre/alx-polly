@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  polls     Poll[]
+
+  @@map("users")
+}
+
+model Poll {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  totalVotes  Int          @default(0)
+  status      PollStatus   @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  endDate     DateTime?
+  createdBy   String
+  options     PollOption[]
+  creator     User         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  votes       Vote[]
+
+  @@map("polls")
+}
+
+model PollOption {
+  id     String @id @default(cuid())
+  text   String
+  votes  Int    @default(0)
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  Vote   Vote[]
+
+  @@map("poll_options")
+}
+
+model Vote {
+  id       String      @id @default(cuid())
+  votedAt  DateTime    @default(now())
+  pollId   String
+  optionId String
+  userId   String
+  option   PollOption  @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  poll     Poll        @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pollId])
+  @@map("votes")
+}
+
+enum PollStatus {
+  ACTIVE
+  INACTIVE
+  CLOSED
+  DRAFT
+}

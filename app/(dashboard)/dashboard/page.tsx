@@ -1,11 +1,9 @@
 import { DashboardStats } from "@/components/polls/dashboard-stats";
 import { RecentPolls } from "@/components/polls/recent-polls";
-import { DashboardHeader } from "@/components/layout/dashboard-header";
 
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>

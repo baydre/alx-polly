@@ -18,6 +18,7 @@ export function CreatePollForm() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [options, setOptions] = useState<PollOption[]>([
     { id: "1", text: "" },
     { id: "2", text: "" },
@@ -68,6 +69,7 @@ export function CreatePollForm() {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
+          endDate: endDate ? new Date(endDate).toISOString() : null,
           options: validOptions.map(option => option.text.trim()),
         }),
       });
@@ -116,6 +118,20 @@ export function CreatePollForm() {
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="endDate">End Date (optional)</Label>
+        <Input
+          id="endDate"
+          type="datetime-local"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+          min={new Date().toISOString().slice(0, 16)}
+        />
+        <p className="text-sm text-gray-500">
+          If not set, the poll will remain active indefinitely
+        </p>
       </div>
 
       <div className="space-y-4">

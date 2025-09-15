@@ -44,6 +44,13 @@ export async function POST(request: NextRequest) {
 
     const { title, description, options, endDate } = await request.json();
 
+    // Debug session
+    console.log("Create Poll Debug:", {
+      sessionUserId: (session.user as any)?.id,
+      sessionUserEmail: session.user?.email,
+      sessionUserName: session.user?.name
+    });
+
     // Validate input
     if (!title || !options || options.length < 2) {
       return NextResponse.json(
@@ -52,11 +59,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const userId = (session.user as any)?.id;
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, message: "User ID not found in session" },
+        { status: 400 }
+      );
+    }
+
     const newPoll = await createPoll({
       title,
       description: description || "",
       options,
-      createdBy: (session.user as any).id,
+      createdBy: userId,
       endDate,
     });
 

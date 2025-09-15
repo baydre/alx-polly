@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Poll as DatabasePoll } from "@/lib/data/database-store";
+import { formatDate } from "@/lib/utils/date";
 
 interface Poll {
   id: string;
@@ -83,7 +85,7 @@ export function RecentPolls() {
                 <div className="flex items-center gap-4 text-xs text-gray-500">
                   <span>{poll.totalVotes} votes</span>
                   <span>{poll.options.length} options</span>
-                  <span>Created {new Date(poll.createdAt).toLocaleDateString()}</span>
+                  <span>Created {formatDate(poll.createdAt)}</span>
                 </div>
               </div>
               <Button variant="outline" size="sm" asChild>

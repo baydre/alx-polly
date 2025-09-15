@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Poll } from "@/lib/data/database-store";
+import { PollActions } from "./poll-actions";
+import { formatDate } from "@/lib/utils/date";
 
 export function PollsList() {
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -76,9 +78,7 @@ export function PollsList() {
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/polls/${poll.id}`}>View Details</Link>
                 </Button>
-                <Button variant="outline" size="sm">
-                  Edit
-                </Button>
+                <PollActions poll={poll} onUpdate={fetchPolls} />
               </div>
             </div>
           </CardHeader>
@@ -94,12 +94,12 @@ export function PollsList() {
                 </div>
                 <div>
                   <span className="text-gray-500">Created:</span>
-                  <p className="font-medium">{new Date(poll.createdAt).toLocaleDateString()}</p>
+                  <p className="font-medium">{formatDate(poll.createdAt)}</p>
                 </div>
                 <div>
                   <span className="text-gray-500">Ends:</span>
                   <p className="font-medium">
-                    {poll.endDate ? new Date(poll.endDate).toLocaleDateString() : "No end date"}
+                    {poll.endDate ? formatDate(poll.endDate) : "No end date"}
                   </p>
                 </div>
               </div>

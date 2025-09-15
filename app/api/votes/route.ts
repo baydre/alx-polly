@@ -6,23 +6,30 @@ import { createVote, hasUserVoted } from "@/lib/data/database-store";
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const { pollId, optionId } = await request.json();
 
+    console.log("Vote request received:", { pollId, optionId, hasSession: !!session });
+
     if (!pollId || !optionId) {
+      console.error("Missing pollId or optionId:", { pollId, optionId });
       return NextResponse.json(
         { success: false, message: "Poll ID and option ID are required" },
         { status: 400 }
       );
     }
 
-    const userId = (session.user as any).id;
+    let userId: string;
+    
+    if (session) {
+      // Authenticated user
+      userId = (session.user as any).id;
+    } else {
+      // Anonymous user - create a unique identifier based on IP and user agent
+      const forwarded = request.headers.get('x-forwarded-for');
+      const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
+      const userAgent = request.headers.get('user-agent') || 'unknown';
+      userId = `anonymous_${Buffer.from(`${ip}_${userAgent}_${pollId}`).toString('base64').slice(0, 20)}`;
+    }
 
     // Check if user already voted
     if (await hasUserVoted(userId, pollId)) {
@@ -39,6 +46,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!vote) {
+      console.error("Failed to create vote:", { pollId, optionId, userId });
       return NextResponse.json(
         { success: false, message: "Failed to record vote" },
         { status: 400 }

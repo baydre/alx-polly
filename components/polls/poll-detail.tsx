@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Poll, PollOption } from "@/lib/data/database-store";
+import { Poll } from "@/lib/data/database-store";
+import { formatDate } from "@/lib/utils/date";
+import dynamic from "next/dynamic";
+
+// Dynamically import QRCode to avoid SSR issues
+const QRCode = dynamic(() => import("react-qr-code"), { ssr: false });
 
 interface PollDetailProps {
   poll: Poll;
@@ -15,11 +21,21 @@ export function PollDetail({ poll }: PollDetailProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [isVoting, setIsVoting] = useState(false);
+  const [voteError, setVoteError] = useState<string>("");
+  const [pollUrl, setPollUrl] = useState<string>("");
+
+  // Set poll URL on client side only to avoid hydration mismatch
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPollUrl(`${window.location.origin}/polls/${poll.id}`);
+    }
+  }, [poll.id]);
 
   const handleVote = async () => {
     if (!selectedOption) return;
 
     setIsVoting(true);
+    setVoteError("");
     try {
       const response = await fetch("/api/votes", {
         method: "POST",
@@ -33,15 +49,13 @@ export function PollDetail({ poll }: PollDetailProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Voting failed:", data.message);
-        // You might want to show an error message to the user
+        setVoteError(data.message || "Failed to submit vote");
       } else {
         setHasVoted(true);
-        // You might want to refresh the poll data to show updated vote counts
-        window.location.reload(); // Simple refresh for now
+        window.location.reload();
       }
     } catch (error) {
-      console.error("Voting failed:", error);
+      setVoteError("Failed to submit vote. Please try again.");
     } finally {
       setIsVoting(false);
     }
@@ -54,7 +68,7 @@ export function PollDetail({ poll }: PollDetailProps) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <Card>
+  <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
@@ -69,10 +83,17 @@ export function PollDetail({ poll }: PollDetailProps) {
         <CardContent>
           <div className="flex gap-6 text-sm text-gray-500 mb-6">
             <span>Total Votes: {poll.totalVotes}</span>
-            <span>Created: {new Date(poll.createdAt).toLocaleDateString()}</span>
+            <span>Created: {formatDate(poll.createdAt)}</span>
           </div>
 
-          {hasVoted && (
+
+          {voteError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertDescription>{voteError}</AlertDescription>
+            </Alert>
+          )}
+
+          {hasVoted && !voteError && (
             <Alert className="mb-6">
               <AlertDescription>
                 Thank you for voting! Your response has been recorded.
@@ -129,6 +150,27 @@ export function PollDetail({ poll }: PollDetailProps) {
           )}
         </CardContent>
       </Card>
+
+      {/* QR Code Sharing Card */}
+      {pollUrl && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Share this Poll</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center gap-4">
+              <div>
+                <QRCode value={pollUrl} size={128} />
+              </div>
+              <div className="text-sm text-gray-600 break-all text-center">
+                <span>Share this link:</span>
+                <br />
+                <a href={pollUrl} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{pollUrl}</a>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Poll Statistics Card */}
       <Card>
