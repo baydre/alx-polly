@@ -32,11 +32,16 @@ alx-polly/
 │   │   └── [id]/               # Public poll viewing and voting
 │   ├── api/                     # API routes
 │   │   ├── auth/               # NextAuth authentication endpoints
+│   │   │   └── [...nextauth]/  # NextAuth.js dynamic route handler
+│   │   ├── register/           # User registration endpoint (outside NextAuth)
 │   │   ├── polls/              # Poll CRUD endpoints
 │   │   │   └── [id]/
 │   │   │       ├── edit/       # Poll update endpoint
-│   │   │       └── stats/      # Poll statistics endpoint
-│   │   └── votes/              # Voting endpoints (supports anonymous)
+│   │   │       ├── delete/     # Poll deletion endpoint
+│   │   │       └── route.ts    # Poll details endpoint
+│   │   ├── votes/              # Voting endpoints (supports anonymous)
+│   │   ├── stats/              # Application statistics endpoint
+│   │   └── debug/              # Development debugging endpoints
 │   ├── globals.css             # Global styles
 │   ├── layout.tsx              # Root layout
 │   └── page.tsx                # Landing page
@@ -86,10 +91,12 @@ alx-polly/
 
 ### Authentication
 - ✅ NextAuth.js integration with credentials provider
-- ✅ User registration and login
-- ✅ Session management
+- ✅ User registration via `/api/register` endpoint
+- ✅ User login through NextAuth.js flow
+- ✅ Session management and JWT tokens
 - ✅ Protected routes with middleware
 - ✅ User profile in session
+- ✅ Deployment-ready auth route structure
 
 ### Database
 - ✅ Prisma ORM with SQLite database
@@ -147,11 +154,17 @@ NEXTAUTH_URL="http://localhost:3000"
 # Generate Prisma client
 npx prisma generate
 
-# Run migrations
+# Run migrations (development)
 npx prisma migrate dev
+
+# Push schema changes (development)
+npx prisma db push
 
 # Seed the database
 npx prisma db seed
+
+# Deploy migrations (production)
+npx prisma migrate deploy
 ```
 
 ## 🚦 Getting Started
@@ -221,6 +234,8 @@ npx prisma db seed
 - **Duplicate Vote Prevention**: IP + User Agent hashing for anonymous users
 - **SQL Injection Protection**: Prisma ORM parameterized queries
 - **CSRF Protection**: NextAuth.js built-in protection
+- **API Route Separation**: Clean separation between NextAuth and application routes
+- **Production Ready**: Resolved Vercel deployment conflicts
 
 ## 🎨 Component Architecture
 
@@ -260,13 +275,31 @@ npx prisma db seed
 
 ### Vercel (Recommended)
 1. Connect GitHub repository to Vercel
-2. Configure environment variables
+2. Configure environment variables in Vercel dashboard
 3. Deploy automatically on push
+4. **Note**: All NextAuth.js route conflicts have been resolved for production
+
+### Environment Variables for Production
+```env
+# Database (use PostgreSQL for production)
+DATABASE_URL="postgresql://user:password@host:port/database"
+
+# NextAuth
+NEXTAUTH_SECRET="your-production-secret-key"
+NEXTAUTH_URL="https://your-domain.vercel.app"
+```
 
 ### Manual Deployment
 ```bash
 npm run build
 npm run start
+```
+
+### Database Migration for Production
+```bash
+# For PostgreSQL in production
+npx prisma migrate deploy
+npx prisma generate
 ```
 
 ## 🤝 Contributing

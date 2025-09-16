@@ -22,6 +22,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user already exists
+    const existingUser = await findUserByEmail(email);
+    if (existingUser) {
+      return NextResponse.json(
+        { success: false, message: "User with this email already exists" },
+        { status: 400 }
+      );
+    }
+
     // Create new user
     const user = await addUser(name, email, password);
 
@@ -33,7 +42,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
-      { success: false, message: "Registration failed" },
+      { success: false, message: `Registration failed: ${error instanceof Error ? error.message : 'Unknown error'}` },
       { status: 500 }
     );
   }
